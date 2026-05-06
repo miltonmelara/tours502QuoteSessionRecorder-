@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "tours502-quote-recorder"
+version = "0.1.0"
+description = "Internal dev tool: records human travel-agent quote sessions for AI training"
+requires-python = ">=3.11"
+dependencies = [
+    "PySide6>=6.6.0",
+    "playwright>=1.44.0",
+    "pydantic>=2.7.0",
+]
+
+[project.scripts]
+quote-recorder = "app.main:main"
+
+# ---------------------------------------------------------------------------
+# Briefcase cross-platform packaging configuration
+# ---------------------------------------------------------------------------
+[tool.briefcase]
+project_name = "Tours502 Quote Recorder"
+bundle = "com.tours502"
+version = "0.1.0"
+url = "https://tours502.com"
+license = "Proprietary"
+author = "Tours502"
+author_email = "dev@tours502.com"
+
+sources = ["app"]
+
+[tool.briefcase.app.quote-recorder]
+formal_name = "Tours502 Quote Recorder"
+description = "Records human travel-agent quote sessions for AI training"
+icon = "resources/icon"
+sources = ["app"]
+
+[tool.briefcase.app.quote-recorder.macOS]
+requires = [
+    "PySide6>=6.6.0",
+    "playwright>=1.44.0",
+    "pydantic>=2.7.0",
+]
+
+[tool.briefcase.app.quote-recorder.windows]
+requires = [
+    "PySide6>=6.6.0",
+    "playwright>=1.44.0",
+    "pydantic>=2.7.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
