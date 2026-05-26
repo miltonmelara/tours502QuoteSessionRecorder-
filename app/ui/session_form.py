@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from PySide6.QtCore import QRegularExpression
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
@@ -37,7 +39,14 @@ class SessionFormWidget(QWidget):
         self.destination.setPlaceholderText("e.g. Belize + Guatemala, 10 days")
 
         self.travel_dates = QLineEdit()
-        self.travel_dates.setPlaceholderText("e.g. 2026-08-10 to 2026-08-20")
+        self.travel_dates.setPlaceholderText("e.g. 10/08/2026 al 20/08/2026")
+        self.travel_dates.setToolTip(
+            "Formato requerido: DD/MM/YYYY o DD/MM/YYYY al DD/MM/YYYY"
+        )
+        date_regex = QRegularExpression(
+            r"^\d{2}/\d{2}/\d{4}(\s*(al|a|to|-)\s*\d{2}/\d{2}/\d{4})?$"
+        )
+        self.travel_dates.setValidator(QRegularExpressionValidator(date_regex, self.travel_dates))
 
         self.travelers = QLineEdit()
         self.travelers.setPlaceholderText("e.g. 2 adults, 1 child (age 8)")
@@ -60,7 +69,7 @@ class SessionFormWidget(QWidget):
         form.addRow("Agent Name *", self.agent_name)
         form.addRow("Client / Reference *", self.client_reference)
         form.addRow("Destination *", self.destination)
-        form.addRow("Travel Dates", self.travel_dates)
+        form.addRow("Travel Dates (DD/MM/YYYY)", self.travel_dates)
         form.addRow("Travelers", self.travelers)
         form.addRow("Budget", self.budget)
         form.addRow("Trip Type", self.trip_type)

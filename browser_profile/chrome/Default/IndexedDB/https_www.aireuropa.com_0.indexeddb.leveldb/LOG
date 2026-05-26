@@ -1,0 +1,7 @@
+2026/05/09-20:32:57.956 7125 Reusing MANIFEST /home/milton/projects/tours502QuoteSessionRecorder/browser_profile/chrome/Default/IndexedDB/https_www.aireuropa.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/09-20:32:57.957 7125 Recovering log #4
+2026/05/09-20:32:57.957 7125 Reusing old log /home/milton/projects/tours502QuoteSessionRecorder/browser_profile/chrome/Default/IndexedDB/https_www.aireuropa.com_0.indexeddb.leveldb/000004.log 
+2026/05/09-20:32:58.116 7129 Level-0 table #8: started
+2026/05/09-20:32:58.121 7129 Level-0 table #8: 1381 bytes OK
+2026/05/09-20:32:58.125 7129 Delete type=0 #4
+2026/05/09-20:32:58.126 7125 Manual compaction at level-0 from '\x00\x02\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x03\x00\x00\x00' @ 0 : 0; will stop at (end)

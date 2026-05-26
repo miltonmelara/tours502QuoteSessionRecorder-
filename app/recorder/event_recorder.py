@@ -49,6 +49,7 @@ class EventRecorder:
         url: str,
         title: str,
         screenshot_path: Optional[Path] = None,
+        metadata: Optional[dict] = None,
     ) -> BrowserEvent:
         event = BrowserEvent(
             session_id=self._session_id,
@@ -58,6 +59,7 @@ class EventRecorder:
             domain=self._extract_domain(url),
             page_title=title,
             screenshot_path=self._rel(screenshot_path),
+            metadata=metadata,
         )
         return self._persist(event)
 
@@ -70,6 +72,7 @@ class EventRecorder:
         element_tag: Optional[str] = None,
         coordinates: Optional[dict] = None,
         screenshot_path: Optional[Path] = None,
+        metadata: Optional[dict] = None,
     ) -> BrowserEvent:
         event = BrowserEvent(
             session_id=self._session_id,
@@ -83,6 +86,7 @@ class EventRecorder:
             element_tag=element_tag,
             coordinates=coordinates,
             screenshot_path=self._rel(screenshot_path),
+            metadata=metadata,
         )
         return self._persist(event)
 
@@ -139,6 +143,48 @@ class EventRecorder:
             input_value=query,
             selector=form_selector,
             screenshot_path=self._rel(screenshot_path),
+        )
+        return self._persist(event)
+
+    def record_scroll(
+        self,
+        url: str,
+        title: str,
+        coordinates: Optional[dict] = None,
+        metadata: Optional[dict] = None,
+    ) -> BrowserEvent:
+        event = BrowserEvent(
+            session_id=self._session_id,
+            timestamp=now_iso(),
+            event_type=EventType.scroll,
+            url=url,
+            domain=self._extract_domain(url),
+            page_title=title,
+            coordinates=coordinates,
+            metadata=metadata,
+        )
+        return self._persist(event)
+
+    def record_ui_change(
+        self,
+        url: str,
+        title: str,
+        selector: Optional[str] = None,
+        element_text: Optional[str] = None,
+        element_tag: Optional[str] = None,
+        metadata: Optional[dict] = None,
+    ) -> BrowserEvent:
+        event = BrowserEvent(
+            session_id=self._session_id,
+            timestamp=now_iso(),
+            event_type=EventType.ui_changed,
+            url=url,
+            domain=self._extract_domain(url),
+            page_title=title,
+            selector=selector,
+            element_text=element_text[:200] if element_text else None,
+            element_tag=element_tag,
+            metadata=metadata,
         )
         return self._persist(event)
 

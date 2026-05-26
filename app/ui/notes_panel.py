@@ -48,6 +48,7 @@ class NotesPanelWidget(QWidget):
             "why you rejected an option, what rule applies, etc.)…"
         )
         self._note_text.setMinimumHeight(80)
+        self._note_text.setEnabled(False)
 
         btn_row = QHBoxLayout()
         self._add_btn = QPushButton("Add Note")
@@ -55,6 +56,8 @@ class NotesPanelWidget(QWidget):
         self._add_btn.clicked.connect(self._submit_note)
         btn_row.addStretch()
         btn_row.addWidget(self._add_btn)
+
+        self._type_combo.setEnabled(False)
 
         input_layout.addRow("Note Type:", self._type_combo)
         input_layout.addRow("Note:", self._note_text)
@@ -73,17 +76,30 @@ class NotesPanelWidget(QWidget):
 
     def set_recording(self, active: bool) -> None:
         """Enable/disable the Add Note button based on recording state."""
+        self._type_combo.setEnabled(active)
+        self._note_text.setEnabled(active)
         self._add_btn.setEnabled(active)
+        if active:
+            self._note_text.setPlaceholderText(
+                "Describe your reasoning here (why you chose this site, "
+                "why you rejected an option, what rule applies, etc.)…"
+            )
+        else:
+            self._note_text.setPlaceholderText(
+                "Start recording to add reasoning notes."
+            )
 
     def _submit_note(self) -> None:
         text = self._note_text.toPlainText().strip()
         if not text:
             return
-        note_type: NoteType = self._type_combo.currentData()
-        self.note_submitted.emit(note_type.value, text)
+        # QComboBox userData may come back as either NoteType or plain str.
+        # Use the visible text as canonical value to avoid runtime type issues.
+        note_type_value = self._type_combo.currentText().strip()
+        self.note_submitted.emit(note_type_value, text)
 
         # Add to history list
-        item = QListWidgetItem(f"[{note_type.value}]  {text[:80]}{'…' if len(text) > 80 else ''}")
+        item = QListWidgetItem(f"[{note_type_value}]  {text[:80]}{'…' if len(text) > 80 else ''}")
         self._history_list.addItem(item)
         self._history_list.scrollToBottom()
 

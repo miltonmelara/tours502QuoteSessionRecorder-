@@ -78,6 +78,14 @@ class MainWindow(QMainWindow):
         self._snapshot_service: Optional[SnapshotService] = None
         self._browser_controller: Optional[BrowserController] = None
         self._zip_path: Optional[Path] = None
+        self._event_breakdown = {
+            "clicks": 0,
+            "inputs": 0,
+            "searches": 0,
+            "scrolls": 0,
+            "virtual_nav": 0,
+            "ui_changes": 0,
+        }
 
         self._build_ui()
         self._set_idle_state()
@@ -215,6 +223,7 @@ class MainWindow(QMainWindow):
         self._btn_generate_zip.setEnabled(False)
         self._notes_panel.set_recording(False)
         self._browser_status.set_status("Idle", "gray")
+        self._browser_status.reset_event_breakdown()
 
     def _set_recording_state(self) -> None:
         self._btn_start.setEnabled(False)
@@ -309,6 +318,15 @@ class MainWindow(QMainWindow):
         # Lock form and update UI
         self._session_form.lock()
         self._timeline.clear_timeline()
+        self._event_breakdown = {
+            "clicks": 0,
+            "inputs": 0,
+            "searches": 0,
+            "scrolls": 0,
+            "virtual_nav": 0,
+            "ui_changes": 0,
+        }
+        self._browser_status.reset_event_breakdown()
         self._browser_status.start_timer()
         self._set_recording_state()
         self.statusBar().showMessage(
@@ -501,13 +519,41 @@ class MainWindow(QMainWindow):
             except queue.Empty:
                 break
             self._timeline.append_event(event)
+            if event.url:
+                self._browser_status.update_url(event.url)
+            if event.page_title:
+                self._browser_status.update_title(event.page_title)
+            self._update_event_breakdown(event)
             if self._session_store:
                 self._browser_status.update_event_count(self._session_store.event_count)
+            self._browser_status.update_event_breakdown(
+                clicks=self._event_breakdown["clicks"],
+                inputs=self._event_breakdown["inputs"],
+                searches=self._event_breakdown["searches"],
+                scrolls=self._event_breakdown["scrolls"],
+                virtual_nav=self._event_breakdown["virtual_nav"],
+                ui_changes=self._event_breakdown["ui_changes"],
+            )
             if self._file_store:
                 self._browser_status.update_screenshot_count(self._file_store.screenshot_count)
             # Persist after every event for crash safety
             if self._session_store:
                 self._session_store.write_all()
+
+    def _update_event_breakdown(self, event: BrowserEvent) -> None:
+        if event.event_type == EventType.click:
+            self._event_breakdown["clicks"] += 1
+        elif event.event_type == EventType.input:
+            self._event_breakdown["inputs"] += 1
+        elif event.event_type == EventType.search_submitted:
+            self._event_breakdown["searches"] += 1
+        elif event.event_type == EventType.scroll:
+            self._event_breakdown["scrolls"] += 1
+        elif event.event_type == EventType.ui_changed:
+            self._event_breakdown["ui_changes"] += 1
+        elif event.event_type == EventType.page_navigated:
+            if event.metadata and event.metadata.get("navigation_kind") == "virtual":
+                self._event_breakdown["virtual_nav"] += 1
 
     # ==================================================================
     # Notes panel slot
@@ -518,44 +564,36 @@ class MainWindow(QMainWindow):
         if not self._session_record or not self._session_store:
             return
 
-        url = self._browser_controller.get_current_url() if self._browser_controller else ""
-        title = self._browser_controller.get_current_title() if self._browser_controller else ""
+        try:
+            # Use UI-cached browser status text to avoid thread-unsafe
+            # Playwright calls from the Qt main thread.
+            url = self._browser_status.current_url()
+            title = self._browser_status.current_title()
 
-        # Optionally take a screenshot
-        screenshot_ref: Optional[str] = None
-        from app.config import SCREENSHOT_ON_NOTE
-        if SCREENSHOT_ON_NOTE and self._browser_controller and self._screenshot_service:
-            page = self._browser_controller.get_page()
-            if page:
-                safe_label = note_type_value.lower().replace(" ", "_").replace("/", "_")
-                path = self._screenshot_service.take_screenshot(page, f"note_{safe_label}")
-                if path:
-                    screenshot_ref = str(path.name)
+            # Find the NoteType enum member by value
+            note_type_enum = NoteType.other
+            for nt in NoteType:
+                if nt.value == note_type_value:
+                    note_type_enum = nt
+                    break
 
-        # Find the NoteType enum member by value
-        note_type_enum = NoteType.other
-        for nt in NoteType:
-            if nt.value == note_type_value:
-                note_type_enum = nt
-                break
+            from app.utils.time_utils import now_iso
+            note = ReasoningNote(
+                session_id=self._session_record.session_id,
+                timestamp=now_iso(),
+                note_type=note_type_enum,
+                note_text=note_text,
+                url=url or None,
+                page_title=title or None,
+                screenshot_path=None,
+            )
+            self._session_store.add_note(note)
+            self._session_store.write_all()
 
-        from app.utils.time_utils import now_iso
-        note = ReasoningNote(
-            session_id=self._session_record.session_id,
-            timestamp=now_iso(),
-            note_type=note_type_enum,
-            note_text=note_text,
-            url=url or None,
-            page_title=title or None,
-            screenshot_path=screenshot_ref,
-        )
-        self._session_store.add_note(note)
-        self._session_store.write_all()
-
-        if self._file_store:
-            self._browser_status.update_screenshot_count(self._file_store.screenshot_count)
-
-        self.statusBar().showMessage(f"Note added: [{note_type_value}]")
+            self.statusBar().showMessage(f"Note added: [{note_type_value}]")
+        except Exception:
+            logger.exception("Failed to add note")
+            self.statusBar().showMessage("Failed to add note. See logs for details.")
 
     # ==================================================================
     # Crash recovery

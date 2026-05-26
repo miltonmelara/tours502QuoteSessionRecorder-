@@ -34,6 +34,12 @@ class BrowserStatusWidget(QWidget):
         self._title_label = QLabel("—")
         self._title_label.setWordWrap(True)
         self._events_label = QLabel("0")
+        self._clicks_label = QLabel("0")
+        self._inputs_label = QLabel("0")
+        self._searches_label = QLabel("0")
+        self._scrolls_label = QLabel("0")
+        self._virtual_nav_label = QLabel("0")
+        self._ui_changes_label = QLabel("0")
         self._screenshots_label = QLabel("0")
         self._duration_label = QLabel("00:00:00")
         self._status_label = QLabel("Idle")
@@ -43,6 +49,12 @@ class BrowserStatusWidget(QWidget):
         form.addRow("Current URL:", self._url_label)
         form.addRow("Page Title:", self._title_label)
         form.addRow("Events captured:", self._events_label)
+        form.addRow("Clicks:", self._clicks_label)
+        form.addRow("Inputs:", self._inputs_label)
+        form.addRow("Searches:", self._searches_label)
+        form.addRow("Scrolls:", self._scrolls_label)
+        form.addRow("Virtual nav:", self._virtual_nav_label)
+        form.addRow("UI changes:", self._ui_changes_label)
         form.addRow("Screenshots:", self._screenshots_label)
         form.addRow("Session duration:", self._duration_label)
 
@@ -58,8 +70,43 @@ class BrowserStatusWidget(QWidget):
     def update_title(self, title: str) -> None:
         self._title_label.setText(title or "—")
 
+    def current_url(self) -> str:
+        text = self._url_label.text().strip()
+        return "" if text == "—" else text
+
+    def current_title(self) -> str:
+        text = self._title_label.text().strip()
+        return "" if text == "—" else text
+
     def update_event_count(self, count: int) -> None:
         self._events_label.setText(str(count))
+
+    def update_event_breakdown(
+        self,
+        *,
+        clicks: int,
+        inputs: int,
+        searches: int,
+        scrolls: int,
+        virtual_nav: int,
+        ui_changes: int,
+    ) -> None:
+        self._clicks_label.setText(str(clicks))
+        self._inputs_label.setText(str(inputs))
+        self._searches_label.setText(str(searches))
+        self._scrolls_label.setText(str(scrolls))
+        self._virtual_nav_label.setText(str(virtual_nav))
+        self._ui_changes_label.setText(str(ui_changes))
+
+    def reset_event_breakdown(self) -> None:
+        self.update_event_breakdown(
+            clicks=0,
+            inputs=0,
+            searches=0,
+            scrolls=0,
+            virtual_nav=0,
+            ui_changes=0,
+        )
 
     def update_screenshot_count(self, count: int) -> None:
         self._screenshots_label.setText(str(count))

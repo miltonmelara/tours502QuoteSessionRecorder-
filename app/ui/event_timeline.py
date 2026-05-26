@@ -17,6 +17,8 @@ _TYPE_ICONS: dict[str, str] = {
     EventType.click: "🖱",
     EventType.input: "⌨",
     EventType.search_submitted: "🔍",
+    EventType.scroll: "↕",
+    EventType.ui_changed: "◫",
     EventType.screenshot_manual: "📷",
     EventType.screenshot_auto: "📸",
     EventType.session_started: "▶",
@@ -52,7 +54,11 @@ class EventTimelineWidget(QWidget):
         ts = event.timestamp[11:19] if event.timestamp else ""  # HH:MM:SS portion
 
         if event.event_type == EventType.page_navigated:
-            desc = f"{event.url or ''}"
+            nav_kind = ""
+            if event.metadata and event.metadata.get("navigation_kind") == "virtual":
+                reason = event.metadata.get("reason", "virtual")
+                nav_kind = f"[virtual:{reason}] "
+            desc = f"{nav_kind}{event.url or ''}"
         elif event.event_type == EventType.click:
             tag = event.element_tag or ""
             text = event.element_text or ""
@@ -60,6 +66,11 @@ class EventTimelineWidget(QWidget):
         elif event.event_type in (EventType.input, EventType.search_submitted):
             val = event.input_value or ""
             desc = f"[{event.input_name or 'field'}] = {val[:60]}" if not event.redacted else "[REDACTED]"
+        elif event.event_type == EventType.scroll:
+            coords = event.coordinates or {}
+            desc = f"{event.url or ''}  x={coords.get('x', 0)} y={coords.get('y', 0)}"
+        elif event.event_type == EventType.ui_changed:
+            desc = f"{event.selector or event.element_tag or 'ui'} {event.element_text or ''}".strip()
         elif event.event_type in (EventType.screenshot_manual, EventType.screenshot_auto):
             desc = event.screenshot_path or ""
         else:

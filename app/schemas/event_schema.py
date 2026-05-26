@@ -14,6 +14,8 @@ class EventType(str, Enum):
     click = "click"
     input = "input"
     search_submitted = "search_submitted"
+    scroll = "scroll"
+    ui_changed = "ui_changed"
     screenshot_manual = "screenshot_manual"
     screenshot_auto = "screenshot_auto"
     session_started = "session_started"

@@ -32,6 +32,13 @@ SCREENSHOT_ON_NOTE: bool = True
 # Take a screenshot after every click (can make ZIPs large — off by default)
 SCREENSHOT_ON_CLICK: bool = False
 
+# Some airline/vendor booking flows use sensitive bot and fraud checks.
+# On these domains we avoid injecting DOM listeners and automatic full-page
+# screenshots. Navigation is still recorded from Playwright browser events.
+BROWSER_PASSIVE_DOMAINS: list[str] = [
+    "aireuropa.com",
+]
+
 # ---------------------------------------------------------------------------
 # Redaction — field names/ids/placeholders/types that must never be stored
 # ---------------------------------------------------------------------------
@@ -86,4 +93,27 @@ REDACTED_PLACEHOLDER = "[REDACTED]"
 # Browser
 # ---------------------------------------------------------------------------
 BROWSER_HEADLESS: bool = False
-BROWSER_CHANNEL: str = "chromium"  # always use chromium for consistency
+# Prefer a real installed browser for airline/vendor sites that treat
+# Playwright's bundled "Chrome for Testing" differently from normal Chrome.
+# Playwright channel names: chrome, msedge, chromium.
+BROWSER_CHANNEL: str = "chrome"
+BROWSER_FALLBACK_CHANNELS: list[str] = [
+    "msedge",
+    "chromium",
+]
+BROWSER_EXECUTABLE_PATH: str = ""
+BROWSER_EXECUTABLE_CANDIDATES: list[str] = [
+    "/opt/google/chrome/chrome",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/opt/microsoft/msedge/msedge",
+    "/usr/bin/microsoft-edge",
+    "/usr/bin/microsoft-edge-stable",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/snap/bin/chromium",
+    "/opt/brave.com/brave/brave",
+    "/usr/bin/brave-browser",
+]
+BROWSER_USE_PERSISTENT_PROFILE: bool = True
+BROWSER_PROFILE_DIR: Path = BASE_DIR / "browser_profile" / "chrome"
